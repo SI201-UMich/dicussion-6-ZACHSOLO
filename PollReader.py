@@ -55,21 +55,29 @@ class PollReader():
         """
 
         # iterate through each row of the data
-        for i in self.raw_data:
+        for i in self.raw_data[1:]:
 
             # split up the row by column
-            seperated = i.split(' ')
+            seperated = i.strip().split(',')
 
             # map each part of the row to the correct column
             self.data_dict['month'].append(seperated[0])
             self.data_dict['date'].append(int(seperated[1]))
             self.data_dict['sample'].append(int(seperated[2]))
-            self.data_dict['sample type'].append(seperated[2])
-            self.data_dict['Harris result'].append(float(seperated[3]))
-            self.data_dict['Trump result'].append(float(seperated[4]))
+            self.data_dict['sample type'].append(seperated[3])
+            self.data_dict['Harris result'].append(float(seperated[4]))
+            self.data_dict['Trump result'].append(float(seperated[5]))
 
 
     def highest_polling_candidate(self):
+        max_harris = max(self.data_dict['Harris result'])
+        max_trump = max(self.data_dict['Trump result'])
+        if max_trump > max_harris:
+            return f"Trump: {max_trump * 100}%"
+        elif max_trump < max_harris:
+            return f"Harris: {max_harris * 100}%"
+        else:
+            return f"Even: {max_harris * 100}%"
         """
         This method should iterate through the result columns and return
         the name of the candidate with the highest single polling percentage
@@ -84,6 +92,20 @@ class PollReader():
 
 
     def likely_voter_polling_average(self):
+        harris_lv = []
+        trump_lv = []
+        for st, h, t in zip(self.data_dict['sample type'],
+                            self.data_dict['Harris result'],
+                            self.data_dict['Trump result']):
+            if st.strip().upper() == "LV":
+                harris_lv.append(h)
+                trump_lv.append(t)
+
+        return (sum(harris_lv) / len(harris_lv),
+                sum(trump_lv) / len(trump_lv))
+
+
+                            
         """
         Calculate the average polling percentage for each candidate among likely voters.
 
@@ -95,6 +117,17 @@ class PollReader():
 
 
     def polling_history_change(self):
+        harris = self.data_dict['Harris result']
+        trump = self.data_dict['Trump result']
+
+        harris_early = sum(harris[:30]) / 30
+        trump_early = sum(trump[:30]) / 30
+
+        harris_late = sum(harris[-30:]) / 30
+        trump_late = sum(trump[-30:]) / 30
+
+        return (harris_late - harris_early,
+            trump_late - trump_early)
         """
         Calculate the change in polling averages between the earliest and latest polls.
 
